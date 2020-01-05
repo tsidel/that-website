@@ -2,7 +2,6 @@ import React from 'react';
 import Head from 'next/head';
 import Router from 'next/router';
 import styled from 'styled-components';
-import { connect } from 'react-redux';
 import { Grid, Cell } from 'styled-css-grid';
 import { useQuery } from '@apollo/react-hooks';
 import { gql } from 'apollo-boost';
@@ -15,7 +14,7 @@ import Commitments from '../../components/CounselorAgreement/Commitments';
 import WhatsProvided from '../../components/CounselorAgreement/WhatsProvided';
 import Acknowledgment from '../../components/CounselorAgreement/Acknowledgment';
 
-import { useFetchUser } from '../../lib/user';
+const _ = require('lodash');
 
 const MainGrid = styled(Grid)`
   grid-gap: 2.5rem;
@@ -56,82 +55,56 @@ const GET_MEMBER = gql`
       me {
         id
         acceptedCommitments
-        isOver18
       }
     }
   }
 `;
 
-const CounselorAgreement = ({ user: reduxUser, dispatch }) => {
-  let user = reduxUser;
-  let userLoading = true;
+const CounselorAgreement = ({ currentUser }) => {
+  if (_.isEmpty(currentUser)) {
+    Router.push('/api/login?redirect-url=/member/edit');
+  }
+  const { loading: memberLoading, error: memberError, data } = useQuery(
+    GET_MEMBER,
+  );
 
-  if (!user) {
-    const { cookieUser, loading } = useFetchUser();
-    userLoading = loading;
-    if (!userLoading) {
-      dispatch({ type: 'USER', payload: cookieUser });
-      user = cookieUser;
-    }
+  if (memberLoading) return null;
+  if (memberError) return null;
+
+  const member = data.members.me;
+
+  if (!member) {
+    React.useEffect(() => {
+      Router.push('/member/create');
+    });
+  } else if (member.acceptedCommitments) {
+    React.useEffect(() => {
+      Router.push('/wi/session/submit');
+    });
+    return null;
   }
 
-  React.useEffect(() => {
-    if (!userLoading && !user) {
-      Router.push('/api/login?redirect-url=/wi/counselor-agreement');
-    }
-  });
-
-  if (user) {
-    const { loading: memberLoading, error: memberError, data } = useQuery(
-      GET_MEMBER,
-    );
-
-    if (memberLoading) return null;
-    if (memberError) return null;
-
-    const member = data.members.me;
-
-    if (!member) {
-      React.useEffect(() => {
-        Router.push('ToDo: Need Profile URL');
-      });
-    } else if (member.acceptedCommitments) {
-      React.useEffect(() => {
-        Router.push('/wi/session/submit');
-      });
-      return null;
-    }
-
-    return (
-      <div>
-        <Head>
-          <title key="title">Counselor Agreement - THAT Conference</title>
-        </Head>
-        <MainContent>
-          <MainGrid columns={6}>
-            <Cell width={1} />
-            <Cell width={4}>
-              <Header />
-              <Commitments />
-              <WhatsProvided />
-              <Acknowledgment
-                acceptedCommitments={member.acceptedCommitments || false}
-                isOver18={member.isOver18 || false}
-              />
-            </Cell>
-            <Cell width={1} />
-          </MainGrid>
-        </MainContent>
-      </div>
-    );
-  }
-  return null;
+  return (
+    <div>
+      <Head>
+        <title key="title">Counselor Agreement - THAT Conference</title>
+      </Head>
+      <MainContent>
+        <MainGrid columns={6}>
+          <Cell width={1} />
+          <Cell width={4}>
+            <Header />
+            <Commitments />
+            <WhatsProvided />
+            <Acknowledgment
+              acceptedCommitments={member.acceptedCommitments || false}
+            />
+          </Cell>
+          <Cell width={1} />
+        </MainGrid>
+      </MainContent>
+    </div>
+  );
 };
 
-const mapStateToProps = state => {
-  return {
-    user: state.user,
-  };
-};
-
-export default connect(mapStateToProps)(CounselorAgreement);
+export default CounselorAgreement;
