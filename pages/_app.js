@@ -6,8 +6,8 @@ import withRedux from 'next-redux-wrapper';
 import App from 'next/app';
 import { ApolloProvider } from '@apollo/react-hooks';
 import Router from 'next/router';
+import debug from 'debug';
 import sentry from '../lib/sentry';
-
 import * as gtag from '../lib/gtag';
 import withApolloClient from '../lib/withApolloClient';
 import Page from '../components/Page';
@@ -16,12 +16,15 @@ Router.events.on('routeChangeComplete', url => gtag.pageview(url));
 
 const { captureException } = sentry();
 
+const dlog = debug('that:app');
+
 const reducer = (state = { user: {}, session: {} }, action) => {
   switch (action.type) {
-    case 'USER':
-      return { ...state, user: action.payload };
     case 'SESSION':
       return { ...state, session: action.payload };
+    case 'CLEAR_STATE':
+      dlog('Logout - clear redux state');
+      return { ...state, user: {} };
     default:
       return state;
   }
@@ -82,17 +85,21 @@ class MyApp extends App {
       Component,
       pageProps,
       apolloClient,
-      store,
       displayFeature,
+      currentUser,
+      store,
     } = this.props;
 
     return (
       <Provider store={store}>
-        <Page displayFeature={displayFeature}>
-          <ApolloProvider client={apolloClient}>
+        <ApolloProvider client={apolloClient}>
+          <Page
+            displayFeature={displayFeature}
+            currentUser={currentUser ? currentUser.user : {}}
+          >
             <Component {...pageProps} />
-          </ApolloProvider>
-        </Page>
+          </Page>
+        </ApolloProvider>
       </Provider>
     );
   }

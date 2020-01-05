@@ -1,9 +1,25 @@
 import styled from 'styled-components';
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
+import { useQuery } from '@apollo/react-hooks';
+import { gql } from 'apollo-boost';
 
-import NavItem from './NavItem';
+import NavItem from '../shared/NavItem';
 import { below } from '../../utilities';
+
+const _ = require('lodash');
+
+const GET_MEMBER = gql`
+  query getMember {
+    members {
+      me {
+        firstName
+        lastName
+        profileSlug
+      }
+    }
+  }
+`;
 
 const SecondaryNav = styled.ul`
   display: ${({ userMenuOpen }) => (userMenuOpen ? '' : 'none')};
@@ -16,43 +32,53 @@ const SecondaryNav = styled.ul`
   top: 2rem;
 `;
 
-const MemberNav = ({ className, onClick, user }) => {
+const MemberNav = ({ className, currentUser, onClick }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
-  const menuClick = event => {
-    event.preventDefault();
+  let member = {};
+  if (!_.isEmpty(currentUser)) {
+    const { loading, error, data: memberData } = useQuery(GET_MEMBER);
 
+    if (loading) return 'Loading...';
+    if (error) return {};
+
+    member = memberData ? memberData.members.me : memberData;
+  }
+
+  const menuClick = e => {
+    e.preventDefault();
     setUserMenuOpen(!userMenuOpen);
-    onClick(false);
   };
 
   return (
     <div className={className}>
-      {user && (
+      {!_.isEmpty(currentUser) && (
         <>
           <NavItem
-            title={`Hi ${user.given_name}!`}
+            title={`Hi ${currentUser.given_name}!`}
             href=""
             icon="arrow"
             iconClass={userMenuOpen ? 'up' : 'down'}
             onClick={menuClick}
           />
+
           <SecondaryNav userMenuOpen={userMenuOpen}>
-            {/* TO DO: Commented out while building out this functionality */}
-            {/* <li>
-              <NavItem
-                title="My Profile"
-                href="/member/sara" // TO DO: need to make this dynamic for the member
-                onClick={() => setUserMenuOpen(false)}
-              />
-            </li>
             <li>
-              <NavItem
-                title="My Sessions"
-                href="/"
-                onClick={() => setUserMenuOpen(false)}
-              />
-            </li> */}
+              {_.isEmpty(member) && (
+                <NavItem
+                  title="Create Profile"
+                  href="/member/create"
+                  onClick={() => setUserMenuOpen(false)}
+                />
+              )}
+              {!_.isEmpty(member) && (
+                <NavItem
+                  title="My Profile"
+                  href={`/member/${member.profileSlug}`}
+                  onClick={() => setUserMenuOpen(false)}
+                />
+              )}
+            </li>
             <li>
               <NavItem
                 title="Log Out"
@@ -64,7 +90,7 @@ const MemberNav = ({ className, onClick, user }) => {
         </>
       )}
 
-      {!user && (
+      {_.isEmpty(currentUser) && (
         <NavItem
           title="Sign In"
           href="/api/login"
@@ -78,13 +104,13 @@ const MemberNav = ({ className, onClick, user }) => {
 MemberNav.propTypes = {
   className: PropTypes.string,
   onClick: PropTypes.func,
-  user: PropTypes.shape({}),
+  currentUser: PropTypes.shape({}),
 };
 
 MemberNav.defaultProps = {
   className: '',
   onClick: () => {},
-  user: {},
+  currentUser: {},
 };
 
 export default styled(MemberNav)`
