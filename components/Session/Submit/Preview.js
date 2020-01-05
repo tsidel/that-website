@@ -171,13 +171,15 @@ const Preview = ({ session: reduxSession }) => {
           content: (
             <Cinnamon.Crisp
               scheme={Cinnamon.Crisp.SCHEME_BLUE}
-              content={() => <div>You can put basically anything here.</div>}
-              title="ButterToast example"
+              content={() => (
+                <div>Your session has been successfully submitted</div>
+              )}
+              title="Success"
             />
           ),
         });
         // ToDo: this needs to redirect...somewhere...My Sessions most likely
-        Router.push('/wi/counselor-start');
+        Router.push('/member/my-sessions');
       },
       err => {
         // ToDo: Appropriately log and handle error

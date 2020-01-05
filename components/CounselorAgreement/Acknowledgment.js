@@ -26,19 +26,19 @@ const Achknowledgment = ({ acceptedCommitments, isOver18 }) => {
     <Formik
       initialValues={{
         agreeToCommitments: acceptedCommitments,
-        are18OrOlder: isOver18,
+        // are18OrOlder: isOver18,
       }}
       validationSchema={Yup.object({
         agreeToCommitments: Yup.bool().oneOf(
           [true],
           'Must agree to the commitments',
         ),
-        are18OrOlder: Yup.bool(),
+        // are18OrOlder: Yup.bool(),
       })}
       onSubmit={values => {
         const profile = {
           acceptedCommitments: values.agreeToCommitments,
-          isOver18: values.are18OrOlder,
+          // isOver18: values.are18OrOlder,
         };
         updateProfile({
           variables: { profile },
@@ -66,14 +66,14 @@ const Achknowledgment = ({ acceptedCommitments, isOver18 }) => {
               label="Agree to commitments to THAT Conference laid out above"
               inputType="checkbox"
             />
-            <FormInput
+            {/* <FormInput
               fieldName="are18OrOlder"
               getFieldProps={getFieldProps}
               errors={errors}
               touched={touched}
               label="Are you 18 or older as of today?"
               inputType="checkbox"
-            />
+            /> */}
           </FormRow>
           <FormSubmit label="Agree and Continue" disabled={isSubmitting} />
         </Form>
