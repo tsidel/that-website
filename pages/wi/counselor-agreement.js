@@ -56,7 +56,6 @@ const GET_MEMBER = gql`
       me {
         id
         acceptedCommitments
-        isOver18
       }
     }
   }
@@ -116,7 +115,6 @@ const CounselorAgreement = ({ user: reduxUser, dispatch }) => {
               <WhatsProvided />
               <Acknowledgment
                 acceptedCommitments={member.acceptedCommitments || false}
-                isOver18={member.isOver18 || false}
               />
             </Cell>
             <Cell width={1} />
